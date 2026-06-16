@@ -1,26 +1,54 @@
 @import "tailwindcss";
 
+/* 따뜻한 문학적 감성 — 색 토큰 */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fbf7f0; /* 크림 / 종이 */
+  --surface: #fffdf8; /* 카드 표면 */
+  --foreground: #2b2420; /* 잉크 브라운 */
+  --muted: #6b5d4f; /* 따뜻한 회갈색 본문 */
+  --accent: #b5653e; /* 테라코타 포인트 */
+  --accent-hover: #9d5232;
+  --border: #e7decf; /* 부드러운 경계 */
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-border-warm: var(--border);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans-kr);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans-kr), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 종이 위에 은은한 결을 더하는 배경 그라데이션 */
+.paper-bg {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(181, 101, 62, 0.08), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(181, 101, 62, 0.05), transparent 55%);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.7s ease-out both;
 }
