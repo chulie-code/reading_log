@@ -2,13 +2,13 @@
 // 서비스명을 바꾸려면 BRAND 한 곳만 수정하면 됩니다.
 
 export const BRAND = {
-  name: "다시, 읽다",
-  tagline: "읽은 것을 삶으로",
-  email: "hello@dasi-ilda.kr",
+  name: "독자저자",
+  tagline: "읽는 사람에서, 쓰는 사람으로",
+  email: "hello@dokjajeoja.kr",
 } as const;
 
 export const HERO = {
-  eyebrow: "AI 기반 독서기록 서비스",
+  eyebrow: "독자에서 저자로 · AI 독서기록 서비스",
   headline: ["당신이 밑줄 친 문장이,", "한 권의 책이 됩니다"],
   subline:
     "흩어진 기록을 AI가 정리하고, 삶에서 어떻게 실천할지 제안하며, 당신의 기록을 엮어 ‘나만의 책’으로 완성합니다.",
