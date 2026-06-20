@@ -1,11 +1,10 @@
 "use server";
 
-import { promises as fs } from "node:fs";
-import path from "node:path";
+import { createClient } from "@/lib/supabase/server";
 
-// MVP: 대기자 이메일을 로컬 JSON 파일에 저장합니다.
-// 추후 Supabase 등 외부 DB로 교체할 때 이 함수의 "저장" 부분만 바꾸면 됩니다.
-const WAITLIST_PATH = path.join(process.cwd(), "data", "waitlist.json");
+// 대기자 이메일을 Supabase `waitlist` 테이블에 저장합니다.
+// (이전에는 로컬 JSON 파일에 저장했으나, 서버리스 환경에서 데이터가
+//  유실되는 문제가 있어 DB로 이전했습니다.)
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -13,26 +12,6 @@ export type WaitlistState = {
   status: "idle" | "success" | "error";
   message?: string;
 };
-
-type WaitlistEntry = {
-  email: string;
-  createdAt: string;
-};
-
-async function readWaitlist(): Promise<WaitlistEntry[]> {
-  try {
-    const raw = await fs.readFile(WAITLIST_PATH, "utf-8");
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as WaitlistEntry[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-async function writeWaitlist(entries: WaitlistEntry[]): Promise<void> {
-  await fs.mkdir(path.dirname(WAITLIST_PATH), { recursive: true });
-  await fs.writeFile(WAITLIST_PATH, JSON.stringify(entries, null, 2), "utf-8");
-}
 
 export async function addToWaitlist(
   _prev: WaitlistState,
@@ -49,20 +28,16 @@ export async function addToWaitlist(
     return { status: "error", message: "올바른 이메일 형식이 아닙니다." };
   }
 
-  try {
-    const entries = await readWaitlist();
-    if (entries.some((e) => e.email === email)) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("waitlist").insert({ email });
+
+  if (error) {
+    // 23505 = unique 제약 위반 → 이미 등록된 이메일
+    if (error.code === "23505") {
       return { status: "error", message: "이미 등록된 이메일입니다." };
     }
-
-    entries.push({ email, createdAt: new Date().toISOString() });
-    await writeWaitlist(entries);
-
-    return { status: "success" };
-  } catch {
-    return {
-      status: "error",
-      message: "잠시 후 다시 시도해 주세요.",
-    };
+    return { status: "error", message: "잠시 후 다시 시도해 주세요." };
   }
+
+  return { status: "success" };
 }
