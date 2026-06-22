@@ -15,6 +15,9 @@ export type DigestState = { data?: ReadingDigest; error?: string };
 const BOOK_STATUSES = ["reading", "done", "want"] as const;
 const NOTE_TYPES = ["thought", "quote"] as const;
 
+// AI 정리 남용·비용 방어: 같은 책은 5분에 한 번만 다시 정리할 수 있습니다.
+const DIGEST_COOLDOWN_MS = 5 * 60 * 1000;
+
 // 현재 로그인한 사용자의 id를 가져옵니다. 없으면 로그인 페이지로 보냅니다.
 async function requireUserId() {
   const supabase = await createClient();
@@ -135,6 +138,20 @@ export async function addNote(
   }
 
   const { supabase, userId } = await requireUserId();
+
+  // 메모를 붙이려는 책이 본인 소유인지 먼저 확인합니다.
+  // (RLS로 본인 책만 조회되므로, 조회되지 않으면 남의 책이거나 없는 책입니다.)
+  const { data: ownedBook } = await supabase
+    .from("books")
+    .select("id")
+    .eq("id", bookId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!ownedBook) {
+    return { error: "잘못된 접근입니다." };
+  }
+
   const { error } = await supabase.from("notes").insert({
     book_id: bookId,
     user_id: userId,
@@ -182,6 +199,25 @@ export async function requestDigest(
   const noteList = (notes ?? []) as { content: string }[];
   if (noteList.length === 0) {
     return { error: "정리할 메모가 없습니다. 먼저 메모를 남겨 주세요." };
+  }
+
+  // 비용 방어: 같은 책을 마지막으로 정리한 지 5분이 안 됐으면 AI 호출 없이 막습니다.
+  const { data: lastDigest } = await supabase
+    .from("digests")
+    .select("created_at")
+    .eq("book_id", bookId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (lastDigest?.created_at) {
+    const elapsed = Date.now() - new Date(lastDigest.created_at).getTime();
+    if (elapsed < DIGEST_COOLDOWN_MS) {
+      const waitMin = Math.ceil((DIGEST_COOLDOWN_MS - elapsed) / 60000);
+      return {
+        error: `방금 정리했어요. 약 ${waitMin}분 후에 다시 시도해 주세요.`,
+      };
+    }
   }
 
   let digest: ReadingDigest;

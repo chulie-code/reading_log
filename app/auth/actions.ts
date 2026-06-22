@@ -66,10 +66,10 @@ export async function signup(
     },
   });
 
-  if (error) {
-    if (error.message.toLowerCase().includes("already registered")) {
-      return { error: "이미 가입된 이메일입니다." };
-    }
+  // 이메일 열거(enumeration) 방지: "이미 가입됨"을 따로 알려주지 않고,
+  // 성공/기존가입 모두 동일한 안내문을 보여 가입 여부가 드러나지 않게 합니다.
+  // (Supabase도 기존 가입 이메일에는 실제 메일을 보내지 않습니다.)
+  if (error && !error.message.toLowerCase().includes("already registered")) {
     return { error: "가입 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요." };
   }
 

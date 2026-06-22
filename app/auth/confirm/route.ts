@@ -8,7 +8,11 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/";
+  // 오픈 리다이렉트 방지: 같은 사이트 내부 경로만 허용합니다.
+  // "/"로 시작하되 "//"(프로토콜 상대 URL → 외부 도메인)는 거부합니다.
+  const nextParam = searchParams.get("next") ?? "/";
+  const next =
+    nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/";
 
   if (token_hash && type) {
     const supabase = await createClient();
