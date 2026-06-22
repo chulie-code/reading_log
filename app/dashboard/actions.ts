@@ -73,6 +73,37 @@ export async function updateBookStatus(formData: FormData) {
   revalidatePath(`/dashboard/${id}`);
 }
 
+export async function updateBookTitle(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const id = String(formData.get("id") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+
+  if (!id) {
+    return { error: "잘못된 접근입니다." };
+  }
+  if (!title) {
+    return { error: "책 제목을 입력해 주세요." };
+  }
+
+  const { supabase, userId } = await requireUserId();
+  // RLS가 본인 데이터만 허용하지만, user_id 조건을 명시해 한 번 더 좁힙니다.
+  const { error } = await supabase
+    .from("books")
+    .update({ title })
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  if (error) {
+    return { error: "제목을 바꾸지 못했습니다. 잠시 후 다시 시도해 주세요." };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/${id}`);
+  return {};
+}
+
 export async function deleteBook(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { BookForm } from "@/components/book-form";
+import { BookRow } from "@/components/book-row";
 
 type Book = {
   id: string;
@@ -48,26 +48,7 @@ export default async function DashboardPage() {
             const meta = STATUS_META[book.status] ?? STATUS_META.reading;
             return (
               <li key={book.id}>
-                <Link
-                  href={`/dashboard/${book.id}`}
-                  className="flex items-center justify-between gap-4 rounded-2xl border border-border-warm bg-surface px-5 py-4 transition-colors hover:border-accent"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-serif text-lg font-bold text-foreground">
-                      {book.title}
-                    </p>
-                    {book.author && (
-                      <p className="truncate text-sm text-muted">
-                        {book.author}
-                      </p>
-                    )}
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${meta.className}`}
-                  >
-                    {meta.label}
-                  </span>
-                </Link>
+                <BookRow book={book} meta={meta} />
               </li>
             );
           })}
